@@ -133,6 +133,7 @@ CREATE TABLE public.teams (
     current_round_id integer
 );
 
+CREATE INDEX idx_teams_current_score ON teams (current_score DESC);
 
 ALTER TABLE public.teams OWNER TO "user";
 
