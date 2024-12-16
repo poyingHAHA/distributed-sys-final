@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+      - name: fastapi
+        image: gcr.io/distributed-system-final/backend-app:v1
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"    # 請求 100 毫核的 CPU 資源
+          limits:
+            cpu: "500m"    # 限制最多使用 500 毫核的 CPU 資源
+        env:
+        - name: ENVIRONMENT
+          value: "production"    # 環境類型
+        - name: DATABASE_URL
+          value: "postgresql://postgres:password@34.80.164.62:5432/marketing_db"    # 資料庫連接

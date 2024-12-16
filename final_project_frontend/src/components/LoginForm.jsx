@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // 新增
 import { authApi } from "../services";
 import {
   Box,
@@ -16,6 +17,7 @@ const LoginForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // 新增
 
   const handleChange = (e) => {
     setCredentials({
@@ -37,7 +39,7 @@ const LoginForm = () => {
       const response = await authApi.login(credentials);
 
       if (response.success) {
-        window.location.href = "/dashboard";
+        navigate("/dashboard"); // 使用 useNavigate 替代 window.location.href
       } else {
         setError(response.message || "Login failed");
       }
