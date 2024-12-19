@@ -12,6 +12,9 @@ from app.api.dependencies import get_current_user
 from app.api.core.exceptions import TeamError, CheckinError, DatabaseError
 from app.schemas import DataResponse
 
+import redis
+redis_client = redis.StrictRedis(host='10.93.61.227', port=6379, db=0, decode_responses=True)
+
 router = APIRouter()
 
 async def calculate_team_score_background(team_id: int, completed_round_id: int, db: Session):
@@ -65,8 +68,25 @@ async def calculate_team_score_background(team_id: int, completed_round_id: int,
     score = total_weights / (alpha * (time_span + 1)) + beta * new_members
 
     try:
+        db.add(history)
+        db.commit()
         # 更新團隊分數
         team.current_score = score
+
+        # Redis 更新
+        redis_key = "team_scores"
+        redis_details_key = f"team:{team_id}"
+        redis_client.expire(redis_key, 24*60*60*7)
+        redis_client.expire(redis_details_key, 24*60*60*7) # 保留一周
+        
+        redis_client.zadd(redis_key, {team_id: score})  # 更新 ZSET
+        redis_client.hset(redis_details_key, mapping={  # 更新詳細信息
+            "team_id": team.team_id,
+            "team_name": team.team_name,
+            "creator_id": team.creator_id,
+            "current_score": score,
+            "member_count": len(completed_checkins)
+        })
 
         # 記錄打卡歷史
         history = TeamCheckinHistory(
@@ -75,8 +95,6 @@ async def calculate_team_score_background(team_id: int, completed_round_id: int,
             member_count=len(completed_checkins),
             round_id=completed_round_id
         )
-        db.add(history)
-        db.commit()
 
     except SQLAlchemyError as e:
         db.rollback()

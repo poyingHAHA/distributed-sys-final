@@ -10,6 +10,9 @@ from app.api.dependencies import get_current_user
 from app.api.core.exceptions import TeamError, DatabaseError
 from app.schemas import DataResponse, PaginatedResponse
 
+import redis
+redis_client = redis.StrictRedis(host='10.93.61.227', port=6379, db=0, decode_responses=True)
+
 router = APIRouter()
 
 @router.post(
@@ -133,38 +136,86 @@ async def get_rankings(
     min_score: Optional[float] = Query(None, ge=0),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Team).options(
-        joinedload(Team.members)
-    )
+    redis_key = "team_scores"
+    redis_details_key_prefix = "team:"
 
-    # 如果有最小分數限制
-    if min_score is not None:
-        query = query.filter(Team.current_score >= min_score)
+    start = (page - 1) * size
+    end = start + size - 1
 
-    # 計算總數
-    total_count = query.count()
-
-    teams = (query
-        .order_by(Team.current_score.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-        .all()
-    )
+    # 從 Redis 嘗試獲取數據
+    if min_score is None:
+        team_ids_with_scores = redis_client.zrevrange(redis_key, start, end, withscores=True)
+    else:
+        team_ids_with_scores = redis_client.zrevrangebyscore(redis_key, "+inf", min_score, withscores=True)[start:end]
 
     rankings = []
-    start_rank = (page - 1) * size + 1
+    missing_team_ids = []
+    for rank_offset, (team_id, score) in enumerate(team_ids_with_scores):
+        team_data = redis_client.hgetall(f"{redis_details_key_prefix}{team_id}")
+        if team_data:
+            # 如果 Redis 中有詳細數據，構造排名結果
+            rankings.append(
+                TeamRankingResponse(
+                    team_id=int(team_data["team_id"]),
+                    team_name=team_data["team_name"],
+                    creator_id=int(team_data["creator_id"]),
+                    current_score=float(team_data["current_score"]),
+                    member_count=int(team_data["member_count"]),
+                    rank=start + rank_offset + 1
+                )
+            )
+        else:
+            # 如果 Redis 中缺失詳細數據，記錄缺失的 team_id
+            missing_team_ids.append(team_id)
 
-    for idx, team in enumerate(teams):
-        rankings.append(
-            TeamRankingResponse(
+    # 如果 Redis 沒有足夠數據，從資料庫查詢補全
+    if missing_team_ids or len(rankings) < size:
+        query = db.query(Team).options(joinedload(Team.members))
+
+        if min_score is not None:
+            query = query.filter(Team.current_score >= min_score)
+
+        # 資料庫查詢排名範圍內的團隊
+        teams = (query
+                 .order_by(Team.current_score.desc())
+                 .offset((page - 1) * size)
+                 .limit(size)
+                 .all())
+
+        redis_pipe = redis_client.pipeline()
+
+        for idx, team in enumerate(teams):
+            rank = start + idx + 1
+
+            # 構造排名結果
+            ranking = TeamRankingResponse(
                 team_id=team.team_id,
                 team_name=team.team_name,
                 creator_id=team.creator_id,
                 current_score=team.current_score,
                 member_count=len(team.members),
-                rank=start_rank + idx
+                rank=rank
             )
-        )
+            rankings.append(ranking)
+
+            # 更新 Redis ZSET
+            redis_pipe.zadd(redis_key, {team.team_id: team.current_score})
+            # 更新 Redis Hash
+            redis_pipe.hset(f"{redis_details_key_prefix}{team.team_id}", mapping={
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "creator_id": team.creator_id,
+                "current_score": team.current_score,
+                "member_count": len(team.members)
+            })
+
+        redis_pipe.execute()
+
+    # 排序結果（防止資料庫查詢多於需求的數據）
+    rankings = sorted(rankings, key=lambda x: x.rank)[:size]
+
+    # 返回排名結果
+    total_count = redis_client.zcard(redis_key) if min_score is None else db.query(Team).filter(Team.current_score >= min_score).count()
 
     return PaginatedResponse(
         success=True,

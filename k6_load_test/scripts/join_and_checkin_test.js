@@ -2,9 +2,9 @@ import http from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { SharedArray } from 'k6/data';
 
-let get_team_join_url = (team_id) => `http://localhost:8000/api/teams/${team_id}/join`;
-let get_team_details_url = (team_id) => `http://localhost:8000/api/teams/${team_id}`;
-let checkin_url = 'http://localhost:8000/api/checkin';
+let get_team_join_url = (team_id) => `http://104.199.189.138:8000/api/teams/${team_id}/join`;
+let get_team_details_url = (team_id) => `http://104.199.189.138:8000/api/teams/${team_id}`;
+let checkin_url = 'http://104.199.189.138:8000/api/checkin';
 
 // 加载用户和团队数据
 const loginResults = new SharedArray('loginResults', function () {
@@ -15,27 +15,32 @@ const loginResults = new SharedArray('loginResults', function () {
 const teamInfo = new SharedArray('teamInfo', function () {
     return JSON.parse(open('../data/team_info.json')); // 替换为 team_info.json 的路径
 });
-const virtual_users = 10;
-const iter_per_vu = loginResults.length / virtual_users;
+// const virtual_users = 10;
+// const iter_per_vu = loginResults.length / virtual_users;
 
-// 配置选项
+// 配置選項
 export const options = {
-    vus: virtual_users, // 并发用户数
-    iterations: loginResults.length, // 总请求次数
-    duration: '40m',
+    stages: [
+        { duration: '30s', target: 50 },   // 在 1 分鐘内將 VUs 增加到 50
+        { duration: '3m', target: 200 }, // 再用 3 分鐘將 VUs 增加到 200
+        { duration: '1m', target: 200 }, // 保持 200 VUs 運行 1 分鐘
+        { duration: '3m', target: 400 },   // 在 3 分鐘内將 VUs 增加到 400
+    ],
+    thresholds: {
+        http_req_duration: ['p(95)<2000'], // 95% 的請求時間要小於 2000ms
+        'http_req_failed': ['rate<0.01'],  // 失敗率要低於 1%
+    },
 };
 
 export default function () {
     // 根据迭代数选择一个用户
-    const userIndex = (__VU - 1) * iter_per_vu + __ITER;
+    const userIndex = Math.floor(Math.random() * loginResults.length);
     const user = loginResults[userIndex];
-
-    // 随机选择一个团队
     const teamIndex = Math.floor(Math.random() * teamInfo.length);
     const team = teamInfo[teamIndex];
 
     // 检查用户和团队信息是否完整
-    if (!user.token || !team.team_name) {
+    if (!user.token || !team.team_id) {
         console.error(`Invalid data: user ${user.username}, team ${team.team_name}`);
         return;
     }
@@ -82,7 +87,7 @@ export default function () {
 
         // Step 3: Checkin for each member in the team
         for (const member of teamMembers) {
-            // console.log(member);
+            console.log(member);
             // console.log(member.username.slice(4));
             // console.log(loginResults[Number(member.username.slice(4))].token);
             const memberHeaders = {

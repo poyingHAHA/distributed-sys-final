@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: fastapi-deployment
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: fastapi
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: fastapi
-        image: gcr.io/distributed-system-final/backend-app:v1
+        image: gcr.io/distributed-system-final/backend-app:v3
         ports:
         - containerPort: 8000
         resources:

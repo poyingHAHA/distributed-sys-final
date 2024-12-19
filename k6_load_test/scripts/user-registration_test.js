@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { SharedArray } from 'k6/data';
 
-const test_URL = 'http://localhost:8000/api/register';
+const test_URL = 'http://104.199.189.138:8000/api/register';
 const virtual_users = 10;
 // 从 JSON 文件加载用户数据
 const users = new SharedArray('users', function () {

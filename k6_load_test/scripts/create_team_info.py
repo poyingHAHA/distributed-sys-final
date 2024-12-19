@@ -24,17 +24,15 @@ def create_team_info(users):
     return team_info
 
 if __name__ == "__main__":
-    INPUT_FILE = "data/login_results.json"
+    INPUT_FILE = "./data/login_results.json"
     try:
         users = load_users(INPUT_FILE)
         team_info = create_team_info(users)
-        # 排序
-        team_info.sort()
+        # 排序，依 team_name 排序
+        team_info.sort(key=lambda x: x["team_name"])
         # 儲存team_info到data/team_info.json
         with open("./data/team_info.json", "w") as file:
             json.dump(team_info, file, indent=4)
     except FileNotFoundError as e:
         print(str(e))
         exit(1)
-        
-    
