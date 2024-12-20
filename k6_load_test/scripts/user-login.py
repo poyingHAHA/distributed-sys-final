@@ -5,10 +5,10 @@ from multiprocessing import Pool, Manager
 from tqdm import tqdm  # 用于进度显示
 
 # 配置
-API_URL = "http://104.199.189.138:8000/api/token"  # 替换为你的登录 API 地址
+API_URL = "http://35.201.156.31:8000/api/token"  # 替换为你的登录 API 地址
 INPUT_FILE = "./data/user_data.json"  # 用户名和密码的输入文件
 OUTPUT_FILE = "./data/login_results.json"  # 登录结果输出文件
-NUM_WORKERS = 8  # 进程数量
+NUM_WORKERS = 4  # 进程数量
 MAX_RETRIES = 4  # 最大重试次数
 
 def load_users(file_path):
@@ -60,23 +60,34 @@ def login_user(user, retries=0):
 
 def save_results(results, file_path):
     """将结果转换为字典格式并保存到 JSON 文件"""
-    output = []
+    successful_results = []
+    error_results = []
+
     for result in results:
         username = result.get("username")
         if username and "token" in result:
-            output.append({
+            successful_results.append({
                 "username": username,
                 "user_id": result.get("user_id"),
                 "token": result.get("token"),
             })
         else:
-            print(f"user {username} has error: {result.get('error')}")
+            error_results.append(result)
 
-    sorted_users = sorted(output, key=lambda x: int(x['username'][4:]))
+    # 按用户名中数字部分排序
+    successful_results.sort(key=lambda x: int(x['username'][4:]))
+
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w") as file:
-        json.dump(sorted_users, file, indent=4)
-    print(f"登录结果已保存到: {file_path}")
+        json.dump(successful_results, file, indent=4)
+
+    print(f"成功登录的用户已保存到: {file_path}")
+
+    # 输出错误信息
+    if error_results:
+        print("以下用户登录失败:")
+        for error in error_results:
+            print(f"用户名: {error.get('username')}, 错误: {error.get('error')}")
 
 def main():
     # 加载用户数据

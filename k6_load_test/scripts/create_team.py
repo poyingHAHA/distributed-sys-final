@@ -5,8 +5,8 @@ from tqdm import tqdm
 from time import sleep
 
 # 配置
-CREATE_TEAM_URL = 'http://104.199.189.138:8000/api/teams'
-CHECKIN_URL = 'http://104.199.189.138:8000/api/checkin'
+CREATE_TEAM_URL = 'http://35.201.156.31:8000/api/teams'
+CHECKIN_URL = 'http://35.201.156.31:8000/api/checkin'
 TEAM_INFO_FILE = './data/team_info.json'  # JSON 文件路径
 MAX_RETRIES = 8  # 最大重试次数
 NUM_OF_WORKER = 4

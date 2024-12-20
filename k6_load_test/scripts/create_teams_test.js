@@ -3,8 +3,8 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { SharedArray } from 'k6/data';
 
-const createTeamURL = 'http://104.199.189.138:8000/api/teams';
-const checkinURL = 'http://104.199.189.138:8000/api/checkin';
+const createTeamURL = 'http://35.201.156.31:8000/api/teams';
+const checkinURL = 'http://35.201.156.31:8000/api/checkin';
 const virtual_users = 10;
 
 // 从 JSON 文件加载用户数据

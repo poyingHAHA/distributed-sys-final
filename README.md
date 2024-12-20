@@ -9,4 +9,4 @@
 5. 執行`python ./scripts/create_team.py`創建1000個teams
 <!-- 5. 執行`K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=v10-itr1000-d20m_create_teams.html k6 run ./scripts/create_teams_test.js`創建1000個teams -->
 6. 執行`python ./scripts/add_team_id.py` 幫team_info加上team_id
-7. 執行`K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=v10-itr2000-d40m_join_and_checkin.html k6 run ./scripts/join_and_checkin_test.js`讓2000個使用者同時加入與checkin
+7. 執行`K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=checkin_load_tesing.html k6 run ./scripts/join_and_checkin_test.js`讓2000個使用者同時加入與checkin

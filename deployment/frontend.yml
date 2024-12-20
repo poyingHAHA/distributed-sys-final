@@ -14,14 +14,14 @@ spec:
     spec:
       containers:
       - name: react-frontend
-        image: gcr.io/distributed-system-final/frontend-app:v1
+        image: gcr.io/distributed-system-final/frontend-app:v7
         ports:
         - containerPort: 80
         env:
         - name: ENVIRONMENT
           value: "production"    # 環境類型
         - name: REACT_APP_BASE_API_URL
-          value: "http://104.199.189.138:8000/api"    # 資料庫連接
+          value: "http://35.201.156.31:8000/api" 
 ---
 apiVersion: v1
 kind: Service

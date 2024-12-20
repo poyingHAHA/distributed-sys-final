@@ -4,7 +4,7 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 
 # 配置
-TEST_URL = 'http://104.199.189.138:8000/api/register'
+TEST_URL = 'http://35.201.156.31:8000/api/register'
 USER_DATA_FILE = './data/user_data.json'  # JSON 文件路径
 MAX_RETRIES = 5
 NUM_OF_WORKER = 4

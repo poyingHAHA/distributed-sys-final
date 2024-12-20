@@ -2,7 +2,7 @@ import requests
 import json
 
 # 配置
-GET_TEAMS_URL = "http://104.199.189.138:8000/api/teams/all"  # 替换为你的获取团队列表的 API 地址
+GET_TEAMS_URL = "http://35.201.156.31:8000/api/teams/all"  # 替换为你的获取团队列表的 API 地址
 TEAM_INFO_FILE = "./data/team_info.json"  # 替换为 team_info.json 的文件路径
 UPDATED_TEAM_INFO_FILE = "./data/team_info.json"  # 更新后的文件路径
 # TOKEN = "your_admin_or_valid_user_token"  # 替换为有权限访问 /teams/all 的 Bearer Token

@@ -2,9 +2,9 @@ import http from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { SharedArray } from 'k6/data';
 
-let get_team_join_url = (team_id) => `http://104.199.189.138:8000/api/teams/${team_id}/join`;
-let get_team_details_url = (team_id) => `http://104.199.189.138:8000/api/teams/${team_id}`;
-let checkin_url = 'http://104.199.189.138:8000/api/checkin';
+let get_team_join_url = (team_id) => `http://35.201.156.31:8000/api/teams/${team_id}/join`;
+let get_team_details_url = (team_id) => `http://35.201.156.31:8000/api/teams/${team_id}`;
+let checkin_url = 'http://35.201.156.31:8000/api/checkin';
 
 // 加载用户和团队数据
 const loginResults = new SharedArray('loginResults', function () {
@@ -20,11 +20,14 @@ const teamInfo = new SharedArray('teamInfo', function () {
 
 // 配置選項
 export const options = {
+    // 指數增長測試
     stages: [
-        { duration: '30s', target: 50 },   // 在 1 分鐘内將 VUs 增加到 50
-        { duration: '3m', target: 200 }, // 再用 3 分鐘將 VUs 增加到 200
-        { duration: '1m', target: 200 }, // 保持 200 VUs 運行 1 分鐘
-        { duration: '3m', target: 400 },   // 在 3 分鐘内將 VUs 增加到 400
+        { duration: '30s', target: 3 }, // 模擬 3 個用戶
+        { duration: '30s', target: 9 }, // 模擬 9 個用戶
+        { duration: '30s', target: 27 }, // 模擬 27 個用戶
+        { duration: '30s', target: 81 },  // 模擬 81 個用戶
+        { duration: '30s', target: 243 },  // 模擬 243 個用戶
+        { duration: '30s', target: 729 },  // 模擬 729 個用戶
     ],
     thresholds: {
         http_req_duration: ['p(95)<2000'], // 95% 的請求時間要小於 2000ms
